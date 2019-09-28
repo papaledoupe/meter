@@ -1,0 +1,28 @@
+{
+  "name": "meter",
+  "version": "1.0.0",
+  "description": "coding exercise",
+  "main": "handler.ts",
+  "dependencies": {
+    "frozen-moment": "^0.4.0",
+    "moment": "^2.24.0",
+    "source-map-support": "^0.5.13"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.33",
+    "@types/jest": "^24.0.18",
+    "@types/node": "^12.7.8",
+    "jest": "^24.9.0",
+    "serverless-webpack": "^5.3.1",
+    "ts-jest": "^24.1.0",
+    "ts-loader": "^5.3.3",
+    "typescript": "^3.6.3",
+    "webpack": "^4.41.0"
+  },
+  "scripts": {
+    "test": "jest",
+    "coverage": "npm run test -- --coverage"
+  },
+  "author": "matt@kitserve.org.uk",
+  "license": "ISC"
+}
