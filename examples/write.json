@@ -1,0 +1,9 @@
+{
+  "path": "customer-reading",
+  "httpMethod": "POST",
+  "headers": {
+    "content-type": "application/json",
+    "accept": "application/json"
+  },
+  "body":"{\"customerId\":\"identifier123\",\"serialNumber\":\"27263927192\",\"mpxn\":\"14582749\",\"read\":[{\"type\":\"ANYTIME\",\"registerId\":\"387373\",\"value\":\"2729\"},{\"type\":\"NIGHT\",\"registerId\":\"387373\",\"value\":\"2892\"}],\"readDate\":\"2017-11-20T16:19:48+00:00Z\"\r\n}"
+}

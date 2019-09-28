@@ -1,0 +1,11 @@
+{
+  "path": "customer/identifier123/supply/14582749/readings",
+  "httpMethod": "GET",
+  "headers": {
+    "accept": "application/json"
+  },
+  "pathParameters": {
+    "customerId": "identifier123",
+    "mpxn": "14582749"
+  }
+}

@@ -4,14 +4,48 @@ provider:
   name: aws
   runtime: nodejs10.x
 
-plugins:
-- serverless-webpack
-
 functions:
-  hello:
-    handler: handler.hello
+  write:
+    handler: src/handler.write
+    events:
+    - http:
+        method: post
+        path: customer-reading
+        request:
+          parameters:
+            paths:
+  readByMeter:
+    handler: src/handler.readByMeter
     events:
     - http:
         method: get
-        path: hello
+        path: customer/{customerId}/meter/{serialNumber}/readings
+        request:
+          parameters:
+            querystrings:
+              limit: false
+              size: false
+            paths:
+              customerId: true
+              serialNumber: true
+  readBySupply:
+    handler: src/handler.readBySupply
+    events:
+    - http:
+        method: get
+        path: customer/{customerId}/supply/{mpxn}/readings
+        request:
+          parameters:
+            querystrings:
+              limit: false
+              size: false
+            paths:
+              customerId: true
+              mpxn: true
 
+plugins:
+- serverless-webpack
+
+custom:
+  webpack:
+    excludeFiles: src/**/*.test.ts

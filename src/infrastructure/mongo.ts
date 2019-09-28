@@ -1,7 +1,8 @@
 import * as mongo from 'mongodb';
 import {CustomerMeter, CustomerReading, CustomerReadingRepository, CustomerSupply} from '../domain/customer';
-import {Pagination} from '../util/pagination';
+import {Page, Paginator} from '../util/pagination';
 import moment from 'moment';
+import {requireEnv} from '../util/env';
 
 // customerId is used as _id.
 export const collectionName = 'customerReading';
@@ -34,13 +35,13 @@ export async function customerReadingRepositoryFactory(db: mongo.Db): Promise<Cu
         readDate: moment(doc.readDate),
     });
 
-    const find = async (query: {}, pagination: Pagination): Promise<CustomerReading[]> => {
+    const find = async (query: {}, paginator: Paginator): Promise<Page<CustomerReading>> => {
         const cursor = collection.find(query, {
             projection: { _id: 0 },
             sort: { readDate: -1 },
         });
-        const docs = await cursor.skip(pagination.skip).limit(pagination.limit).toArray();
-        return docs.map(fromDoc);
+        const docs = await cursor.skip(paginator.skip).limit(paginator.limit).toArray();
+        return paginator.createPage(docs.map(fromDoc));
     };
 
     return {
@@ -48,14 +49,28 @@ export async function customerReadingRepositoryFactory(db: mongo.Db): Promise<Cu
             await collection.insertOne(toDoc(customerReading), writeConcern);
         },
 
-        async findByCustomerMeter(customerMeter: CustomerMeter, pagination: Pagination = new Pagination()): Promise<CustomerReading[]> {
+        async findByCustomerMeter(customerMeter: CustomerMeter, paginator: Paginator = new Paginator()): Promise<Page<CustomerReading>> {
             const { customerId, serialNumber } = customerMeter;
-            return await find({ customerId, serialNumber }, pagination);
+            return await find({ customerId, serialNumber }, paginator);
         },
 
-        async findByCustomerSupply(customerSupply: CustomerSupply, pagination: Pagination = new Pagination()): Promise<CustomerReading[]> {
+        async findByCustomerSupply(customerSupply: CustomerSupply, paginator: Paginator = new Paginator()): Promise<Page<CustomerReading>> {
             const { customerId, mpxn } = customerSupply;
-            return await find({ customerId, mpxn }, pagination);
+            return await find({ customerId, mpxn }, paginator);
         }
     }
 }
+
+let mongoClient: mongo.MongoClient;
+export const connectDb = async (): Promise<mongo.Db> => {
+    if (!mongoClient) {
+        const dbUrl = requireEnv('MONGO_URL');
+        mongoClient = new mongo.MongoClient(dbUrl, {useNewUrlParser: true, useUnifiedTopology: true});
+        await mongoClient.connect();
+    }
+    return mongoClient.db();
+};
+
+export const disconnectDb = async (): Promise<void> => {
+    await mongoClient.close()
+};

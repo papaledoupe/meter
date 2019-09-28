@@ -1,4 +1,4 @@
-import {parseCustomerReading, dateFormat, BadRequestError} from './serialization';
+import {dateFormat, optionalInt, parseCustomerReading, SerializationError} from './serialization';
 import moment from 'moment';
 
 describe('serialization', () => {
@@ -76,7 +76,7 @@ describe('serialization', () => {
             `)).toThrow('customerId must be a string');
         });
 
-        it('throws BadRequestError when missing serialNumber', () => {
+        it('throws error when missing serialNumber', () => {
             expect(() => parseCustomerReading(`
             {
                 "customerId": "cid",
@@ -88,7 +88,7 @@ describe('serialization', () => {
                     "value": "123"
                 }]
             }
-            `)).toThrow(BadRequestError);
+            `)).toThrow(SerializationError);
         });
 
         it('throws error when missing mpxn', () => {
@@ -140,6 +140,26 @@ describe('serialization', () => {
                 "read": []
             }
             `)).toThrow('readDate must be in format ' + dateFormat);
+        });
+
+    });
+
+    describe('optionalInt', () => {
+
+        it('returns null when key does not exist on object', () => {
+            expect(optionalInt({}, 'k')).toBeNull();
+        });
+
+        it('returns null when key on object but not integer', () => {
+            expect(optionalInt({ k: 'hello' }, 'k')).toBeNull();
+        });
+
+        it('returns number when key on object and is integer', () => {
+            expect(optionalInt({ k: 4 }, 'k')).toBe(4);
+        });
+
+        it('returns number when key on object and can be parsed to integer', () => {
+            expect(optionalInt({ k: '4' }, 'k')).toBe(4);
         });
 
     });

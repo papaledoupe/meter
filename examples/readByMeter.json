@@ -1,0 +1,11 @@
+{
+  "path": "customer/identifier123/meter/27263927192/readings",
+  "httpMethod": "GET",
+  "headers": {
+    "accept": "application/json"
+  },
+  "pathParameters": {
+    "customerId": "identifier123",
+    "serialNumber": "27263927192"
+  }
+}

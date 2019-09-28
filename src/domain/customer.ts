@@ -1,6 +1,6 @@
 import {MeterReading, validateMeterReading} from './reading';
 import {invariant, notBlank} from './invariant';
-import {Pagination} from '../util/pagination';
+import {Page, Paginator} from '../util/pagination';
 
 // CustomerMeter uniquely identifies a meter used by a customer.
 // - while customerId is globally unique, do not rely on serialNumber being unique.
@@ -40,6 +40,6 @@ export function validateCustomerReading(customerReading: CustomerReading) {
 
 export interface CustomerReadingRepository {
     save(customerReading: CustomerReading): Promise<void>
-    findByCustomerMeter(customerMeter: CustomerMeter, pagination?: Pagination): Promise<CustomerReading[]>
-    findByCustomerSupply(customerSupply: CustomerSupply, pagination?: Pagination): Promise<CustomerReading[]>
+    findByCustomerMeter(customerMeter: CustomerMeter, paginator?: Paginator): Promise<Page<CustomerReading>>
+    findByCustomerSupply(customerSupply: CustomerSupply, paginator?: Paginator): Promise<Page<CustomerReading>>
 }

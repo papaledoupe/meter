@@ -1,38 +1,50 @@
 import {CustomerReading} from '../domain/customer';
 import moment from 'moment';
 
-export class BadRequestError extends Error {}
+export class SerializationError extends Error {}
 
-const requireProperty = (object: object, key: string): any => {
+export const requireProperty = (object: object, key: string): any => {
     if (!object.hasOwnProperty(key)) {
-        throw new BadRequestError(`${key} is required`)
+        throw new SerializationError(`${key} is required`)
     }
     return object[key];
 };
 
-const requireArray = (object: object, key: string): any[] => {
+export const requireArray = (object: object, key: string): any[] => {
     const prop = requireProperty(object, key);
     if (!Array.isArray(prop)) {
-        throw new BadRequestError(`${key} must be an array`)
+        throw new SerializationError(`${key} must be an array`)
     }
     return object[key]
 };
 
-const requireString = (object: object, key: string): string => {
+export const requireString = (object: object, key: string): string => {
     const prop = requireProperty(object, key);
     if (typeof prop !== 'string') {
-        throw new BadRequestError(`${key} must be a string`)
+        throw new SerializationError(`${key} must be a string`)
     }
     return object[key]
+};
+
+export const optionalInt = (object: object, key: string): number | null => {
+    if (!object.hasOwnProperty(key)) {
+        return null
+    }
+    const val = object[key];
+    const intVal = parseInt(val, 10);
+    if (isNaN(intVal)) {
+        return null;
+    }
+    return intVal;
 };
 
 export const dateFormat = "YYYY-MM-DDTHH:mm:ssZZ[Z]";
 
-const requireMoment = (object: object, key: string): moment.Moment => {
+export const requireMoment = (object: object, key: string): moment.Moment => {
     const str = requireString(object, key);
     const mom = moment.parseZone(str, dateFormat, true);
     if (!mom.isValid()) {
-        throw new BadRequestError(`${key} must be in format ${dateFormat}`)
+        throw new SerializationError(`${key} must be in format ${dateFormat}`)
     }
     return mom;
 };
