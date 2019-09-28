@@ -1,3 +1,4 @@
+// Runs all tests.
 module.exports = {
     "roots": [
         "<rootDir>/lib"
@@ -5,4 +6,5 @@ module.exports = {
     "transform": {
         "^.+\\.ts$": "ts-jest"
     },
+    testRegex: "(\\.|/)(test|it)\\.ts?$"
 };

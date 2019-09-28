@@ -6,13 +6,16 @@
   "dependencies": {
     "frozen-moment": "^0.4.0",
     "moment": "^2.24.0",
+    "mongodb": "^3.3.2",
     "source-map-support": "^0.5.13"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.33",
     "@types/jest": "^24.0.18",
+    "@types/mongodb": "^3.3.3",
     "@types/node": "^12.7.8",
     "jest": "^24.9.0",
+    "mongo-unit": "^1.4.5",
     "serverless-webpack": "^5.3.1",
     "ts-jest": "^24.1.0",
     "ts-loader": "^5.3.3",
@@ -20,8 +23,10 @@
     "webpack": "^4.41.0"
   },
   "scripts": {
-    "test": "jest",
-    "coverage": "npm run test -- --coverage"
+    "test": "jest --config jest.config.js",
+    "coverage": "jest --config jest.config.js --coverage",
+    "unit-test": "jest --config jest.unit.config.js",
+    "integration-test": "jest --config jest.it.config.js"
   },
   "author": "matt@kitserve.org.uk",
   "license": "ISC"

@@ -1,5 +1,5 @@
 import {invariant, notBlank, notEmpty} from './invariant';
-import * as moment from 'frozen-moment';
+import moment from 'frozen-moment';
 
 // Arbitrary, just to give some more interesting validation.
 export const earliestReadingDate = moment('2000-01-01T00:00:00.000Z')
@@ -8,8 +8,8 @@ export const earliestReadingDate = moment('2000-01-01T00:00:00.000Z')
 
 // MeterReading represents a simultaneous reading for all registers in the meter.
 export type MeterReading = {
-    read: RegisterValue[]
-    readDate: moment.Moment
+    readonly read: RegisterValue[]
+    readonly readDate: moment.Moment
 }
 
 export function validateMeterReading(meterReading: MeterReading) {
@@ -22,9 +22,9 @@ export function validateMeterReading(meterReading: MeterReading) {
 }
 
 export type RegisterValue = {
-    registerId: string
-    type: string // could be an enum if types are well-defined.
-    value: string
+    readonly registerId: string
+    readonly type: string // could be an enum if types are well-defined.
+    readonly value: string
 }
 
 export function validateRegisterValue(registerValue: RegisterValue) {

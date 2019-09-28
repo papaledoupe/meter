@@ -1,7 +1,7 @@
 import {validateCustomerMeter, validateCustomerSupply, validateCustomerReading} from './customer';
 import {InvariantBrokenError} from './invariant';
 import {validateMeterReading} from './reading';
-import * as moment from 'moment';
+import moment from 'moment';
 
 jest.mock('./reading', () => ({
     validateMeterReading: jest.fn(),

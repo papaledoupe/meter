@@ -1,6 +1,6 @@
 import {validateMeterReading, validateRegisterValue, earliestReadingDate} from './reading';
 import {InvariantBrokenError} from './invariant';
-import * as moment from 'moment';
+import moment from 'moment';
 
 describe('reading', () => {
 
@@ -16,7 +16,7 @@ describe('reading', () => {
             expect(() => validateRegisterValue({
                 registerId: reg,
                 type: 'TYPE',
-                value: '123',
+                value: '123'
             })).toThrow(InvariantBrokenError);
         });
 
@@ -30,7 +30,7 @@ describe('reading', () => {
             expect(() => validateRegisterValue({
                 registerId: 'regid',
                 type: type,
-                value: '123',
+                value: '123'
             })).toThrow(InvariantBrokenError);
         });
 
@@ -44,7 +44,7 @@ describe('reading', () => {
             expect(() => validateRegisterValue({
                 registerId: 'regid',
                 type: 'TYPE',
-                value: value,
+                value: value
             })).toThrow(InvariantBrokenError);
         });
 
@@ -52,7 +52,7 @@ describe('reading', () => {
             validateRegisterValue({
                 registerId: 'reg',
                 type: 'TYPE',
-                value: 'value',
+                value: 'value'
             });
         });
     });
@@ -62,7 +62,7 @@ describe('reading', () => {
         const validReading = {
             registerId: 'reg',
             type: 'TYPE',
-            value: 'value',
+            value: 'value'
         };
 
         it('throws when no register readings', () => {
@@ -82,14 +82,14 @@ describe('reading', () => {
         it(`does not throw when reading taken on exactly ${earliestReadingDate}`, () => {
             validateMeterReading({
                 read: [validReading],
-                readDate: earliestReadingDate,
+                readDate: earliestReadingDate
             });
         });
 
         it(`throws when reading taken before ${earliestReadingDate}`, () => {
             expect(() => validateMeterReading({
                 read: [validReading],
-                readDate: earliestReadingDate.clone().subtract(1, 'second'),
+                readDate: earliestReadingDate.clone().subtract(1, 'second')
             })).toThrow(InvariantBrokenError);
         });
 
