@@ -1,14 +1,9 @@
 import * as mongoUnit from 'mongo-unit';
 import * as mongo from 'mongodb';
-import {collectionName, customerReadingRepositoryFactory, connectDb, disconnectDb} from './mongo';
-import {
-    CustomerMeter,
-    CustomerReading,
-    CustomerReadingRepository,
-    CustomerSupply
-} from '../domain/customer';
-import moment from 'frozen-moment';
-import {Paginator} from '../util/pagination';
+import {collectionName, connectDb, customerReadingRepositoryFactory, disconnectDb} from './mongo';
+import {CustomerMeter, CustomerReading, CustomerReadingRepository, CustomerSupply} from '../domain/customer';
+import {Page, Paginator} from '../util/pagination';
+import * as dateFns from 'date-fns';
 
 describe('mongo', () => {
 
@@ -27,9 +22,18 @@ describe('mongo', () => {
 
     describe('connectDb', () => {
 
-        it('can be called multiple times', async () => {
+        it('can be called multiple times with no side-effects', async () => {
             // was already called once during setup.
             await connectDb();
+        });
+
+    });
+
+    describe('disconnectDb', () => {
+
+        it('can be called multiple times with no side-effects', async () => {
+            await disconnectDb();
+            await disconnectDb();
         });
 
     });
@@ -57,7 +61,7 @@ describe('mongo', () => {
                 customerId: 'cid',
                 serialNumber: 'sn',
                 mpxn: 'mpxn',
-                readDate: moment(),
+                readDate: new Date(),
                 read: [{
                     type: 'TYPE',
                     registerId: 'reg',
@@ -69,12 +73,7 @@ describe('mongo', () => {
             await repository.save(reading);
             const page = await repository.findByCustomerMeter(meter);
 
-            expect(page.results).toHaveLength(1);
-            expect(page.results[0].customerId).toBe(reading.customerId);
-            expect(page.results[0].serialNumber).toBe(reading.serialNumber);
-            expect(page.results[0].mpxn).toBe(reading.mpxn);
-            expect(page.results[0].readDate.format()).toEqual(reading.readDate.format());
-            expect(page.results[0].read).toStrictEqual(reading.read);
+            expect(page).toEqual(new Page([reading], new Paginator()));
         });
 
         it('allows saving and retrieving reading by customer supply', async () => {
@@ -82,7 +81,7 @@ describe('mongo', () => {
                 customerId: 'cid',
                 serialNumber: 'sn',
                 mpxn: 'mpxn',
-                readDate: moment(),
+                readDate: new Date(),
                 read: [{
                     type: 'TYPE',
                     registerId: 'reg',
@@ -94,15 +93,10 @@ describe('mongo', () => {
             await repository.save(reading);
             const page = await repository.findByCustomerSupply(supply);
 
-            expect(page.results).toHaveLength(1);
-            expect(page.results[0].customerId).toBe(reading.customerId);
-            expect(page.results[0].serialNumber).toBe(reading.serialNumber);
-            expect(page.results[0].mpxn).toBe(reading.mpxn);
-            expect(page.results[0].readDate.format()).toEqual(reading.readDate.format());
-            expect(page.results[0].read).toStrictEqual(reading.read);
+            expect(page).toEqual(new Page([reading], new Paginator()));
         });
 
-        const createReadingForMeter = (customerMeter: CustomerMeter, readDate: moment.Moment = moment()): CustomerReading => {
+        const createReadingForMeter = (customerMeter: CustomerMeter, readDate: Date = new Date()): CustomerReading => {
             return {
                 ...customerMeter,
                 mpxn: 'mpxn',
@@ -140,12 +134,12 @@ describe('mongo', () => {
         it('paginates pages for customer meter sorted by most recent', async () => {
             const meter = { customerId: 'c1', serialNumber: 'sn1' };
 
-            const mom = moment().freeze();
-            await repository.save(createReadingForMeter(meter, mom.subtract(10, 's')));
-            await repository.save(createReadingForMeter(meter, mom.subtract(15, 's')));
-            await repository.save(createReadingForMeter(meter, mom.subtract(5, 's')));
-            await repository.save(createReadingForMeter(meter, mom.subtract(20, 's')));
-            await repository.save(createReadingForMeter(meter, mom));
+            const now = new Date();
+            await repository.save(createReadingForMeter(meter, dateFns.subSeconds(now, 10)));
+            await repository.save(createReadingForMeter(meter, dateFns.subSeconds(now, 15)));
+            await repository.save(createReadingForMeter(meter, dateFns.subSeconds(now, 5)));
+            await repository.save(createReadingForMeter(meter, dateFns.subSeconds(now, 20)));
+            await repository.save(createReadingForMeter(meter, now));
 
             let pagination = new Paginator(2);
             let page0 = await repository.findByCustomerMeter(meter, pagination);
@@ -153,18 +147,18 @@ describe('mongo', () => {
             let page2 = await repository.findByCustomerMeter(meter, pagination.ofNextPage().ofNextPage());
 
             expect(page0.results).toHaveLength(2);
-            expect(page0.results[0].readDate.format()).toBe(mom.format());
-            expect(page0.results[1].readDate.format()).toBe(mom.subtract(5, 's').format());
+            expect(page0.results[0].readDate).toStrictEqual(now);
+            expect(page0.results[1].readDate).toStrictEqual(dateFns.subSeconds(now, 5));
 
             expect(page1.results).toHaveLength(2);
-            expect(page1.results[0].readDate.format()).toBe(mom.subtract(10, 's').format());
-            expect(page1.results[1].readDate.format()).toBe(mom.subtract(15, 's').format());
+            expect(page1.results[0].readDate).toStrictEqual(dateFns.subSeconds(now, 10));
+            expect(page1.results[1].readDate).toStrictEqual(dateFns.subSeconds(now, 15));
 
             expect(page2.results).toHaveLength(1);
-            expect(page2.results[0].readDate.format()).toBe(mom.subtract(20, 's').format());
+            expect(page2.results[0].readDate).toStrictEqual(dateFns.subSeconds(now, 20));
         });
 
-        const createReadingForSupply = (customerSupply: CustomerSupply, readDate: moment.Moment = moment()): CustomerReading => {
+        const createReadingForSupply = (customerSupply: CustomerSupply, readDate: Date = new Date()): CustomerReading => {
             return {
                 ...customerSupply,
                 serialNumber: 'sn',
@@ -202,12 +196,12 @@ describe('mongo', () => {
         it('paginates pages for customer supply sorted by most recent', async () => {
             const supply = { customerId: 'c1', mpxn: 'mp1' };
 
-            const mom = moment().freeze();
-            await repository.save(createReadingForSupply(supply, mom.subtract(10, 's')));
-            await repository.save(createReadingForSupply(supply, mom.subtract(15, 's')));
-            await repository.save(createReadingForSupply(supply, mom.subtract(5, 's')));
-            await repository.save(createReadingForSupply(supply, mom.subtract(20, 's')));
-            await repository.save(createReadingForSupply(supply, mom));
+            const now = new Date();
+            await repository.save(createReadingForSupply(supply, dateFns.subSeconds(now, 10)));
+            await repository.save(createReadingForSupply(supply, dateFns.subSeconds(now, 15)));
+            await repository.save(createReadingForSupply(supply, dateFns.subSeconds(now, 5)));
+            await repository.save(createReadingForSupply(supply, dateFns.subSeconds(now, 20)));
+            await repository.save(createReadingForSupply(supply, now));
 
             let pagination = new Paginator(2);
             let page0 = await repository.findByCustomerSupply(supply, pagination);
@@ -215,15 +209,15 @@ describe('mongo', () => {
             let page2 = await repository.findByCustomerSupply(supply, pagination.ofNextPage().ofNextPage());
 
             expect(page0.results).toHaveLength(2);
-            expect(page0.results[0].readDate.format()).toBe(mom.format());
-            expect(page0.results[1].readDate.format()).toBe(mom.subtract(5, 's').format());
+            expect(page0.results[0].readDate).toStrictEqual(now);
+            expect(page0.results[1].readDate).toStrictEqual(dateFns.subSeconds(now, 5));
 
             expect(page1.results).toHaveLength(2);
-            expect(page1.results[0].readDate.format()).toBe(mom.subtract(10, 's').format());
-            expect(page1.results[1].readDate.format()).toBe(mom.subtract(15, 's').format());
+            expect(page1.results[0].readDate).toStrictEqual(dateFns.subSeconds(now, 10));
+            expect(page1.results[1].readDate).toStrictEqual(dateFns.subSeconds(now, 15));
 
             expect(page2.results).toHaveLength(1);
-            expect(page2.results[0].readDate.format()).toBe(mom.subtract(20, 's').format());
+            expect(page2.results[0].readDate).toStrictEqual(dateFns.subSeconds(now, 20));
         });
     })
 

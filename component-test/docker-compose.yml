@@ -1,0 +1,14 @@
+version: '2'
+services:
+  meter:
+    image: node:10-alpine
+    volumes:
+      - ..:/opt/meter
+    ports:
+      - 3000
+    environment:
+      MONGO_URL: mongodb://mongodb:27017/comptest
+    working_dir: /opt/meter
+    entrypoint: npm run sls -- offline --host 0.0.0.0
+  mongodb:
+    image: mongo:3.3

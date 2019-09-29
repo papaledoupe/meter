@@ -1,5 +1,4 @@
-import {dateFormat, optionalInt, parseCustomerReading, SerializationError} from './serialization';
-import moment from 'moment';
+import {dateFormat, optionalInt, parseCustomerReading, requireDate, SerializationError} from './serialization';
 
 describe('serialization', () => {
 
@@ -11,7 +10,7 @@ describe('serialization', () => {
                 "customerId": "cid",
                 "serialNumber": "sn",
                 "mpxn": "m",
-                "readDate": "2017-01-01T01:01:01+00:00Z",
+                "readDate": "2017-01-01T01:01:01Z",
                 "read": [{
                     "registerId": "reg",
                     "type": "TYPE",
@@ -20,15 +19,17 @@ describe('serialization', () => {
             }
             `);
 
-            expect(customerReading.customerId).toEqual("cid");
-            expect(customerReading.serialNumber).toEqual("sn");
-            expect(customerReading.mpxn).toEqual("m");
-            expect(customerReading.readDate.format()).toEqual(moment.parseZone("2017-01-01T01:01:01+00:00Z", dateFormat).format());
-            expect(customerReading.read).toEqual([{
-                registerId: "reg",
-                type: "TYPE",
-                value: "123"
-            }]);
+            expect(customerReading).toEqual({
+                customerId: 'cid',
+                serialNumber: 'sn',
+                mpxn: 'm',
+                readDate: new Date("2017-01-01T01:01:01Z"),
+                read: [{
+                    registerId: "reg",
+                    type: "TYPE",
+                    value: "123"
+                }]
+            });
         });
 
         it('returns CustomerReading when no reads and otherwise valid', () => {
@@ -39,7 +40,7 @@ describe('serialization', () => {
                 "customerId": "cid",
                 "serialNumber": "sn",
                 "mpxn": "m",
-                "readDate": "2017-01-01T01:01:01+00:00Z",
+                "readDate": "2017-01-01T01:01:01Z",
                 "read": []
             }
             `);
@@ -50,7 +51,7 @@ describe('serialization', () => {
             {
                 "serialNumber": "sn",
                 "mpxn": "m",
-                "readDate": "2017-01-01T01:01:01+00:00Z",
+                "readDate": "2017-01-01T01:01:01Z",
                 "read": [{
                     "registerId": "reg",
                     "type": "TYPE",
@@ -66,7 +67,7 @@ describe('serialization', () => {
                 "customerId": 1,
                 "serialNumber": "sn",
                 "mpxn": "m",
-                "readDate": "2017-01-01T01:01:01+00:00Z",
+                "readDate": "2017-01-01T01:01:01Z",
                 "read": [{
                     "registerId": "reg",
                     "type": "TYPE",
@@ -81,7 +82,7 @@ describe('serialization', () => {
             {
                 "customerId": "cid",
                 "mpxn": "m",
-                "readDate": "2017-01-01T01:01:01+00:00Z",
+                "readDate": "2017-01-01T01:01:01Z",
                 "read": [{
                     "registerId": "reg",
                     "type": "TYPE",
@@ -96,7 +97,7 @@ describe('serialization', () => {
             {
                 "customerId": "cid",
                 "serialNumber": "sn",
-                "readDate": "2017-01-01T01:01:01+00:00Z",
+                "readDate": "2017-01-01T01:01:01Z",
                 "read": [{
                     "registerId": "reg",
                     "type": "TYPE",
@@ -112,7 +113,7 @@ describe('serialization', () => {
                 "customerId": "cid",
                 "mpxn": "m",
                 "serialNumber": "sn",
-                "readDate": "2017-01-01T01:01:01+00:00Z",
+                "readDate": "2017-01-01T01:01:01Z",
                 "read": "4"
             }
             `)).toThrow('read must be an array');
@@ -130,16 +131,36 @@ describe('serialization', () => {
             `)).toThrow('readDate must be in format ' + dateFormat);
         });
 
-        it('throws error when readDate is not zoned', () => {
-            expect(() => parseCustomerReading(`
-            {
-                "customerId": "cid",
-                "mpxn": "m",
-                "serialNumber": "sn",
-                "readDate": "2017-01-01T01:01:01",
-                "read": []
-            }
-            `)).toThrow('readDate must be in format ' + dateFormat);
+    });
+
+    describe('requireDate', () => {
+
+        it.each`
+        d
+        ${'2001-01-01'}
+        ${'2001-01-01 00:00:00'}
+        ${'2001-01-01T00:00:00'}
+        ${'2001-01-01T00:00:00.000'}
+        ${'2001-01-01T00:00:00+00:00Z'}
+        `('throws error when not in required format (example: $d)', ({d}) => {
+            expect(() => requireDate({d}, 'd')).toThrow(SerializationError);
+        });
+
+        it.each`
+        d
+        ${'2001-01-01T00:00:00+00:00'}
+        ${'2001-01-01T00:00:00Z'}
+        `('accepts required format (example: $d)', ({d}) => {
+            requireDate({d}, 'd');
+        })
+
+    });
+
+    describe('Date.prototype.toJSON monkey patch', () => {
+
+        it('serializes Date without fractional seconds', () => {
+            const result = new Date("2017-01-01T12:00:00.000Z").toJSON();
+            expect(result).toEqual('2017-01-01T12:00:00Z');
         });
 
     });

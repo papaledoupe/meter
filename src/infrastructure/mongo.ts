@@ -1,13 +1,10 @@
 import * as mongo from 'mongodb';
 import {CustomerMeter, CustomerReading, CustomerReadingRepository, CustomerSupply} from '../domain/customer';
 import {Page, Paginator} from '../util/pagination';
-import moment from 'moment';
 import {requireEnv} from '../util/env';
 
 // customerId is used as _id.
 export const collectionName = 'customerReading';
-
-export type CustomerReadingDoc = Omit<CustomerReading, 'readDate'> & { readonly readDate: Date }
 
 export async function customerReadingRepositoryFactory(db: mongo.Db): Promise<CustomerReadingRepository> {
 
@@ -17,7 +14,7 @@ export async function customerReadingRepositoryFactory(db: mongo.Db): Promise<Cu
         w: 'majority',
     };
 
-    const collection = await db.collection<CustomerReadingDoc>(collectionName);
+    const collection = await db.collection<CustomerReading>(collectionName);
     // The service supports retrieval by meter and supply. This can't be achieved with a single index, since mongo indices
     // are prefix-based.
     await collection.createIndex({ customerId: 1, serialNumber: 1 });
@@ -25,28 +22,31 @@ export async function customerReadingRepositoryFactory(db: mongo.Db): Promise<Cu
     // index order doesn't matter for single fields.
     await collection.createIndex({ readDate: 1 });
 
-    const toDoc = (customerReading: CustomerReading): CustomerReadingDoc => ({
-        ...customerReading,
-        readDate: customerReading.readDate.toDate()
-    });
-
-    const fromDoc = (doc: CustomerReadingDoc): CustomerReading => ({
-        ...doc,
-        readDate: moment(doc.readDate),
-    });
-
     const find = async (query: {}, paginator: Paginator): Promise<Page<CustomerReading>> => {
         const cursor = collection.find(query, {
-            projection: { _id: 0 },
+            projection: {
+                // project out the _id field.
+                _id: 0,
+                // annoyingly, cannot use negated projection (_id: 0) to exclude only individual keys
+                customerId: 1,
+                serialNumber: 1,
+                mpxn: 1,
+                readDate: 1,
+                read: 1,
+            },
             sort: { readDate: -1 },
         });
-        const docs = await cursor.skip(paginator.skip).limit(paginator.limit).toArray();
-        return paginator.createPage(docs.map(fromDoc));
+        const docs = await cursor
+            .skip(paginator.skip)
+            .limit(paginator.limit)
+            .toArray();
+        return paginator.createPage(docs);
     };
 
     return {
         async save(customerReading: CustomerReading): Promise<void> {
-            await collection.insertOne(toDoc(customerReading), writeConcern);
+            // using assign because mongo mutates the underlying object with _id
+            await collection.insertOne(Object.assign({}, customerReading), writeConcern);
         },
 
         async findByCustomerMeter(customerMeter: CustomerMeter, paginator: Paginator = new Paginator()): Promise<Page<CustomerReading>> {
@@ -72,5 +72,8 @@ export const connectDb = async (): Promise<mongo.Db> => {
 };
 
 export const disconnectDb = async (): Promise<void> => {
-    await mongoClient.close()
+    if (mongoClient) {
+        await mongoClient.close()
+    }
+    mongoClient = null;
 };

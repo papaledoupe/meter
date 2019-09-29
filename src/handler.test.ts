@@ -2,7 +2,6 @@ import {readByMeter, readBySupply, write} from './handler';
 import {SerializationError} from './infrastructure/serialization';
 import {InvariantBrokenError} from './domain/invariant';
 import {CustomerReading} from './domain/customer';
-import moment from 'moment';
 import {Paginator} from './util/pagination';
 
 const customer = require('./domain/customer');
@@ -46,7 +45,7 @@ describe('handler', () => {
                 customerId: "c",
                 serialNumber: "sn",
                 mpxn: "m",
-                readDate: moment(),
+                readDate: new Date(),
                 read: [],
             };
             serialization.parseCustomerReading.mockReturnValue(customerReading);
@@ -74,7 +73,7 @@ describe('handler', () => {
                 customerId: "c",
                 serialNumber: "sn",
                 mpxn: "m",
-                readDate: moment(),
+                readDate: new Date(),
                 read: [],
             };
             serialization.parseCustomerReading.mockReturnValue(customerReading);

@@ -1,5 +1,5 @@
 import {CustomerReading} from '../domain/customer';
-import moment from 'moment';
+import * as dateFns from 'date-fns';
 
 export class SerializationError extends Error {}
 
@@ -38,15 +38,23 @@ export const optionalInt = (object: object, key: string): number | null => {
     return intVal;
 };
 
-export const dateFormat = "YYYY-MM-DDTHH:mm:ssZZ[Z]";
+// Date format in the specification has no fractional seconds.
+export const dateFormat = "yyyy-MM-dd'T'HH:mm:ssXXX";
 
-export const requireMoment = (object: object, key: string): moment.Moment => {
+// Standard JS Date serialization includes the fractional seconds, this is hack to remove them :)
+const dateToJSON = Date.prototype.toJSON;
+Date.prototype.toJSON = function(key?: any): string {
+    const standard = dateToJSON.call(this, key);
+    return standard.replace(/\.[0-9]{3}/, '');
+};
+
+export const requireDate = (object: object, key: string): Date => {
     const str = requireString(object, key);
-    const mom = moment.parseZone(str, dateFormat, true);
-    if (!mom.isValid()) {
+    const date = dateFns.parse(str, dateFormat, new Date());
+    if (isNaN(date.getTime())) {
         throw new SerializationError(`${key} must be in format ${dateFormat}`)
     }
-    return mom;
+    return date;
 };
 
 export function parseCustomerReading(payload: string): CustomerReading {
@@ -60,6 +68,6 @@ export function parseCustomerReading(payload: string): CustomerReading {
             type: requireString(element, 'type'),
             value: requireString(element, 'value'),
         })),
-        readDate: requireMoment(obj, 'readDate'),
+        readDate: requireDate(obj, 'readDate'),
     }
 }

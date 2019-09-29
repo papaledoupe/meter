@@ -1,6 +1,6 @@
-import {validateMeterReading, validateRegisterValue, earliestReadingDate} from './reading';
+import {earliestReadingDate, validateMeterReading, validateRegisterValue} from './reading';
 import {InvariantBrokenError} from './invariant';
-import moment from 'moment';
+import * as dateFns from 'date-fns';
 
 describe('reading', () => {
 
@@ -68,14 +68,14 @@ describe('reading', () => {
         it('throws when no register readings', () => {
             expect(() => validateMeterReading({
                 read: [],
-                readDate: moment()
+                readDate: new Date()
             })).toThrow(InvariantBrokenError);
         });
 
         it('does not throw when valid', () => {
             validateMeterReading({
                 read: [validReading],
-                readDate: moment()
+                readDate: new Date()
             });
         });
 
@@ -89,7 +89,7 @@ describe('reading', () => {
         it(`throws when reading taken before ${earliestReadingDate}`, () => {
             expect(() => validateMeterReading({
                 read: [validReading],
-                readDate: earliestReadingDate.clone().subtract(1, 'second')
+                readDate: dateFns.subSeconds(earliestReadingDate, 1)
             })).toThrow(InvariantBrokenError);
         });
 

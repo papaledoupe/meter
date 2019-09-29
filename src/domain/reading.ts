@@ -1,15 +1,13 @@
 import {invariant, notBlank, notEmpty} from './invariant';
-import moment from 'frozen-moment';
+import * as dateFns from 'date-fns';
 
 // Arbitrary, just to give some more interesting validation.
-export const earliestReadingDate = moment('2000-01-01T00:00:00.000Z')
-    // moment instances are mutable, which is very dangerous in situations like this. frozen-moment avoids this.
-    .freeze();
+export const earliestReadingDate = new Date('2000-01-01T00:00:00.000Z');
 
 // MeterReading represents a simultaneous reading for all registers in the meter.
 export type MeterReading = {
     readonly read: RegisterValue[]
-    readonly readDate: moment.Moment
+    readonly readDate: Date
 }
 
 export function validateMeterReading(meterReading: MeterReading) {
@@ -18,7 +16,7 @@ export function validateMeterReading(meterReading: MeterReading) {
     invariant('must have at least one register reading', notEmpty(read));
     read.forEach(validateRegisterValue);
 
-    invariant(`reading must have been taken after ${earliestReadingDate}`, readDate.isSameOrAfter(earliestReadingDate, 'ms'))
+    invariant(`reading must have been taken after ${earliestReadingDate}`, !dateFns.isBefore(readDate, earliestReadingDate))
 }
 
 export type RegisterValue = {

@@ -1,7 +1,6 @@
-import {validateCustomerMeter, validateCustomerSupply, validateCustomerReading} from './customer';
+import {validateCustomerMeter, validateCustomerReading, validateCustomerSupply} from './customer';
 import {InvariantBrokenError} from './invariant';
 import {validateMeterReading} from './reading';
-import moment from 'moment';
 
 jest.mock('./reading', () => ({
     validateMeterReading: jest.fn(),
@@ -69,7 +68,7 @@ describe('customer', () => {
                 serialNumber: 'sn',
                 mpxn: 'mpxn',
                 read: [],
-                readDate: moment(),
+                readDate: new Date(),
             })
         });
 
@@ -83,7 +82,7 @@ describe('customer', () => {
                 serialNumber: 'sn',
                 mpxn: 'mpxn',
                 read: [],
-                readDate: moment(),
+                readDate: new Date(),
             })).toThrow(InvariantBrokenError);
         });
 

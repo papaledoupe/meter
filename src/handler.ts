@@ -5,10 +5,11 @@ import {
     CustomerReading,
     CustomerSupply,
     validateCustomerMeter,
-    validateCustomerReading, validateCustomerSupply
+    validateCustomerReading,
+    validateCustomerSupply
 } from './domain/customer';
 import {optionalInt, parseCustomerReading, requireString, SerializationError} from './infrastructure/serialization';
-import {connectDb, disconnectDb, customerReadingRepositoryFactory} from './infrastructure/mongo';
+import {connectDb, customerReadingRepositoryFactory, disconnectDb} from './infrastructure/mongo';
 import {InvariantBrokenError} from './domain/invariant';
 import {Paginator} from './util/pagination';
 

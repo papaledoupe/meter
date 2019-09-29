@@ -1,4 +1,4 @@
-// Runs all tests.
+// Runs integration and unit tests
 module.exports = {
     "roots": [
         "<rootDir>/src"
